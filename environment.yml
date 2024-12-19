@@ -1,0 +1,20 @@
+name: hotspots 
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10.0
+  - numpy
+  - scipy
+  - xarray
+  - opencv
+  - netCDF4
+  - scikit-image
+  - scikit-learn
+  - matplotlib
+  - bottleneck
+  - arm_pyart
+  - wradlib
+  - xradar
+  - jupyter
+  - cmasher
+  - cmocean

@@ -1,0 +1,11 @@
+<radars>
+<calibration name="KEWX" time="20210504" height_0C_km="4.336" height_neg10C_km="5.574" height_neg20C_km="7.162" height_neg30C_km="8.616" height_neg40C_km="10.021" />
+<calibration name="KFDR" time="20200522" height_0C_km="4.308" height_neg10C_km="5.713" height_neg20C_km="7.007" height_neg30C_km="8.322" height_neg40C_km="9.559" />
+
+KOAX20140603_213649_V06.gz missing right now.....
+
+<calibration name="KSHV" time="20230613" height_0C_km="4.443" height_neg10C_km="6.029" height_neg20C_km="7.679" height_neg30C_km="9.055" height_neg40C_km="10.263" />
+<calibration name="KTLX" time="20230227" height_0C_km="3.878" height_neg10C_km="5.085" height_neg20C_km="6.45" height_neg30C_km="7.746" height_neg40C_km="8.978" />
+<calibration name="KUDX" time="2015061912" height_0C_km="3.79" height_neg10C_km="5.033" height_neg20C_km="6.432" height_neg30C_km="7.759" height_neg40C_km="9.092" />
+</radars>
+
