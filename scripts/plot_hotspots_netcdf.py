@@ -39,8 +39,8 @@ for i, filename in enumerate(filenames):
     data = dataset['hotspot_field']
     
     # now let's take a look at the output
-    xlim = (-100, 100)
-    ylim = (-100, 100)
+    xlim = (-200, 200)
+    ylim = (-200, 200)
     obj_cmap = klaus_krause_cmap.get_obj_cmap()
     hs_cmap = klaus_krause_cmap.get_hs_cmap(3.0)
     
@@ -54,7 +54,7 @@ for i, filename in enumerate(filenames):
     
     ax3 = axs[1]
     hotspot.plot(
-        x="x", y="y", xlim=xlim, ylim=ylim, cmap=obj_cmap, vmin=0, vmax=75,
+        x="x", y="y", xlim=xlim, ylim=ylim, cmap=obj_cmap, vmin=0, vmax=200,
         ax=ax3, cbar_kwargs={'extend': 'both',  'pad':0.01, 'label':'HotSpot objects', 'shrink':0.9})
     ax3.set_title('HotSpot objects', fontweight='bold')
     

@@ -92,7 +92,9 @@ def mcit_objects(vil_xy: xr.DataArray,
     # average filter
     kernel = np.ones((3, 3)) / 9
     smlin_vil = cv2.filter2D(linear_vil, ddepth=-1, kernel=kernel)
-
+    #remove data that is below threshold
+    #smlin_vil = np.where(smlin_vil<=min_value, np.nan, smlin_vil)
+   
     #We follow the techinque described in:
     #https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_watershed.html
     #https://docs.opencv.org/4.x/d3/db4/tutorial_py_watershed.html
@@ -100,7 +102,7 @@ def mcit_objects(vil_xy: xr.DataArray,
     #  We can't know starting locations so we use all values not equal to the missing value as or unknown region 
     
     #set the background data (white in image above) to 0 and the foreground data (non-white) to 1
-    valid = np.where(smlin_vil==np.nan, 0, 1)
+    valid = np.where(smlin_vil>=min_value, 1, 0)
     
     #the c++ code uses the vincent-sollie method and c library which is slightly different from 
     #the openCV interpretation 
@@ -118,8 +120,8 @@ def mcit_objects(vil_xy: xr.DataArray,
     #note that this happens after the watershed is complete
     #note the min_value must be in linVIL which is converted 
     #at the top of the subroutine
-    #note: 'Not an object' locations are labeled -1
-    labels_arr = np.where(smlin_vil > min_value, labels_arr, -1).astype(int)
+    #note: 'Not an object' locations are labeled -1 
+    labels_arr = np.where(smlin_vil >= min_value, labels_arr, -1).astype(int)
 
     #Using the trimmed labels we want to identify watersheds that are adjacent 
     #to one another. We do this by walking the image pixel by pixel. When we 
@@ -131,8 +133,10 @@ def mcit_objects(vil_xy: xr.DataArray,
 
     vildata = vil_xy.values
 
+    #exit after no move ids are combined
     # dummy variable for the check below
     old_number_of_ids = 9999
+    removed_ids = [] #once an id is removed it stays removed
 
     # iterate as long as we find new connections
     while len(np.unique(labels_arr)[1:]) < old_number_of_ids:
@@ -140,29 +144,43 @@ def mcit_objects(vil_xy: xr.DataArray,
         old_number_of_ids = len(ids)
         max_vals = ndi.maximum(vildata, labels=labels_arr, index=ids)
 
-        idx_sort = np.argsort(max_vals)
-        ids_by_maximum = ids[idx_sort[::-1]]
+        #Lets create a dict of ids/max_vil values for ease
+        #of use and understanding
+        idx = dict(zip(ids, max_vals))
+        # Sort by values in descending order
+        idx_by_max = dict(sorted(idx.items(), key=lambda item: item[1], reverse=True))
 
-        removed_ids = []
+        #idx_sort = np.argsort(max_vals)
+        #ids_by_maximum = ids[idx_sort[::-1]]
+        #once an id is removed it stays removed
+        #removed_ids = []
 
-        for target_id in ids_by_maximum:
+        for target_id in idx_by_max.keys():
             if target_id in removed_ids:
                 continue
 
             neighboring_labels, border_mask = get_neighboring_labels(
                 labels_arr, target_id)
 
+            if neighboring_labels.size == 0:
+                continue
+
             for neighbor_id in neighboring_labels:
-                if neighbor_id == -1:
-                    continue
+                #we removed the -1 values in get_neighboring_labels
+                #if neighbor_id == -1:
+                #    continue
 
                 # Find the border between label and neighbor
                 border = (border_mask & (labels_arr == neighbor_id))
 
                 # our reference the weakest peak that is being checked
+                #peak_val = np.min(
+                #    [max_vals[ids == neighbor_id][0],
+                #     max_vals[ids == target_id][0]])
                 peak_val = np.min(
-                    [max_vals[ids == neighbor_id][0],
-                     max_vals[ids == target_id][0]])
+                    [idx_by_max[neighbor_id],
+                    idx_by_max[target_id]]
+                                 )
 
                 # Calculate the maximum value along the border in the data
                 max_val_along_watershed = np.max(vildata[border])
@@ -170,6 +188,7 @@ def mcit_objects(vil_xy: xr.DataArray,
                 # if the maximum value is close enough to the smaller peak VIL,
                 # then we combine the objects
                 if (peak_val - max_val_along_watershed) < valley_depth:
+                    #print("Combine: %d and %d"%(target_id, neighbor_id))
                     labels_arr[labels_arr == neighbor_id] = target_id
                     removed_ids.append(neighbor_id)
 
@@ -297,5 +316,8 @@ def get_neighboring_labels(labels_arr: np.ndarray,
 
     # Find neighboring labels
     neighboring_labels = np.unique(labels_arr[border_mask])
+
+    #remove the -1 values
+    neighboring_labels = neighboring_labels[~(neighboring_labels == -1)]
 
     return neighboring_labels, border_mask
